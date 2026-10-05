@@ -58,7 +58,13 @@ jobs:
         run: flutter config --enable-windows-desktop
 
       - name: Build Windows
-        run: python scripts/build_windows.py --all-sources=${{ matrix.all_sources }}
+        shell: bash
+        run: |
+          if [ "${{ matrix.all_sources }}" = "true" ]; then
+            python scripts/build_windows.py --all-sources
+          else
+            python scripts/build_windows.py
+          fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
