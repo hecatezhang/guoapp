@@ -152,21 +152,14 @@ class LocalStore extends ChangeNotifier {
   /// 当前是否处于「不使用密码、显示全部站源」状态。
   bool get sourceGateOff => _gateOff;
 
-  void _loadSourceGate() {
-    final enabled = _bool('sourceGateEnabled') ?? false;
-    final off = _bool('sourceGateOff') ?? false;
-    final salt = _string('sourceGateSalt') ?? '';
-    final hash = _string('sourceGateHash') ?? '';
-    final valid =
-        enabled &&
-        RegExp(r'^[a-f0-9]{32}$').hasMatch(salt) &&
-        RegExp(r'^[a-f0-9]{64}$').hasMatch(hash);
-    _gateEnabled = valid;
-    _gateOff = !valid && off;
-    _gateSalt = valid ? salt : '';
-    _gateHash = valid ? hash : '';
-    _sourcesUnlocked = false;
-  }
+void _loadSourceGate() {
+  // 启动时强制关闭站源密码锁、显示全部已编译站源，忽略本地存储的残留状态。
+  _gateEnabled = false;
+  _gateOff = true;
+  _gateSalt = '';
+  _gateHash = '';
+  _sourcesUnlocked = false;
+}
 
   Future<void> _checkSourcePin(String pin) async {
     if (DateTime.now().isBefore(_retryAfter)) {
