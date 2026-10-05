@@ -76,3 +76,30 @@ jobs:
           path: dist/windows/*
           if-no-files-found: error
           retention-days: 14
+
+  release:
+    needs: windows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: List downloaded files
+        run: find artifacts -type f
+
+      - name: Publish to Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: windows-${{ github.run_number }}
+          name: Windows Build ${{ github.run_number }}
+          prerelease: true
+          body: |
+            自动构建的 Windows 客户端（x64）。
+            - hongguojian-windows-x64.zip：红果鉴（仅红果站源）
+            - zhenguojian-windows-x64.zip：真果鉴（全部站源）
+            解压后双击 hongguojian.exe / zhenguojian.exe 运行。
+          files: artifacts/**/*.zip
