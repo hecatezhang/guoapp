@@ -57,6 +57,9 @@ jobs:
       - name: Enable Windows desktop
         run: flutter config --enable-windows-desktop
 
+      - name: Update pubspec.lock
+        run: flutter pub get
+
       - name: Build Windows
         shell: bash
         run: |
