@@ -1,0 +1,48 @@
+name: Build Windows (cloud)
+
+on:
+  workflow_dispatch:        # 手动点一下就跑
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - edition: hongguojian        # 红果鉴：仅红果站源
+            all_sources: 'false'
+          - edition: zhenguojian        # 真果鉴：全部站源
+            all_sources: 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.4'
+          channel: stable
+          cache: true
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Pub get
+        run: flutter pub get
+
+      # 用仓库自带的脚本出 Windows 包（会编译 native 的 duanju_core.dll 并打包 zip）
+      - name: Build Windows
+        run: python scripts/build_windows.py --all-sources=${{ matrix.all_sources }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.edition }}-windows-x64
+          path: dist/windows/*
+          if-no-files-found: error
+          retention-days: 14
