@@ -1,7 +1,7 @@
 name: Build Windows (cloud)
 
 on:
-  workflow_dispatch:        # 手动点一下就跑
+  workflow_dispatch:
   push:
     branches: [main, master]
 
@@ -11,7 +11,7 @@ permissions:
 jobs:
   windows:
     runs-on: windows-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
@@ -23,6 +23,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.24.1'
+          cache-dependency-path: native/go.sum
+
+      - name: Install MinGW-w64
+        shell: pwsh
+        run: |
+          choco install mingw -y
+          $mingwPath = "C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin"
+          if (Test-Path $mingwPath) {
+            Add-Content -Path $env:GITHUB_PATH -Value $mingwPath
+            Write-Host "Added $mingwPath to PATH"
+          }
+
+      - name: Verify MinGW
+        shell: pwsh
+        run: |
+          x86_64-w64-mingw32-gcc --version
+          Get-Command x86_64-w64-mingw32-gcc
+
       - uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.47.4'
@@ -32,10 +57,6 @@ jobs:
       - name: Enable Windows desktop
         run: flutter config --enable-windows-desktop
 
-      - name: Pub get
-        run: flutter pub get
-
-      # 用仓库自带的脚本出 Windows 包（会编译 native 的 duanju_core.dll 并打包 zip）
       - name: Build Windows
         run: python scripts/build_windows.py --all-sources=${{ matrix.all_sources }}
 
